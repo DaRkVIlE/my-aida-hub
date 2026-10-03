@@ -1,8 +1,10 @@
 /**
- * AIDA Hub — useAidaPlayer Hook
- * Substitui o useSharedBrain.ts do GABLAB OS.
- * Busca o usuário logado no LibreChat e seu perfil MANA,
- * expondo todos os dados necessários para os componentes do Hub.
+ * AIDA Hub — useAidaPlayer Hook v2
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Gerencia o estado central do jogador/aluno no Hub.
+ * 
+ * v2: Usa Bearer token (localStorage) em vez de cookies cross-domain.
+ * Detecta autenticação lendo o token local — sem chamada de rede para verificar.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -10,6 +12,9 @@ import {
   getCurrentUser,
   getManaProfile,
   getLeaderboard,
+  getStoredToken,
+  getStoredUser,
+  clearAuthSession,
   RANK_CONFIG,
   getXpProgress,
   type LibreChatUser,
@@ -25,7 +30,7 @@ export interface AidaPlayerState {
   hubState: HubState;
   error: string | null;
 
-  // Dados do usuário LibreChat
+  // Dados do usuário
   user: LibreChatUser | null;
 
   // Dados MANA
@@ -51,6 +56,7 @@ export interface AidaPlayerState {
 
   // Ações
   refetch: () => Promise<void>;
+  logout: () => void;
 }
 
 const AIDA_CHAT_URL = (import.meta.env.VITE_AIDA_CHAT_URL as string) || 'https://aida.experiasolutions.com.br';
@@ -65,29 +71,53 @@ export function useAidaPlayer(): AidaPlayerState {
   const fetchAll = useCallback(async () => {
     setHubState('loading');
     setError(null);
+
     try {
-      // 1. Autenticação via cookie de sessão
-      const userData = await getCurrentUser();
-      setUser(userData);
+      // 1. Verificação rápida: há token no localStorage?
+      const token = getStoredToken();
+      if (!token) {
+        setHubState('unauthenticated');
+        return;
+      }
+
+      // 2. Tenta pegar usuário do cache local primeiro (sem rede)
+      const cachedUser = getStoredUser();
+      let userData: LibreChatUser;
+
+      if (cachedUser) {
+        userData = cachedUser;
+        setUser(userData);
+      } else {
+        // Fallback: busca via API com Bearer token
+        userData = await getCurrentUser();
+        setUser(userData);
+      }
 
       const userId = userData._id || userData.id;
-      if (!userId) throw new Error('User ID not found in session');
+      if (!userId) throw new Error('User ID not found');
 
-      // 2. Perfil MANA + Leaderboard em paralelo
+      // 3. Perfil MANA + Leaderboard em paralelo (não bloqueantes)
       const [manaData, lbData] = await Promise.allSettled([
         getManaProfile(userId),
         getLeaderboard(),
       ]);
 
-      if (manaData.status === 'fulfilled') setProfile(manaData.value);
-      else console.warn('[useAidaPlayer] MANA profile not found — may be first session');
+      if (manaData.status === 'fulfilled') {
+        setProfile(manaData.value);
+      } else {
+        console.warn('[useAidaPlayer] MANA profile not found — may be first session');
+      }
 
-      if (lbData.status === 'fulfilled') setLeaderboard(lbData.value);
+      if (lbData.status === 'fulfilled') {
+        setLeaderboard(lbData.value);
+      }
 
       setHubState('ready');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
+      // Token inválido ou expirado → limpa sessão local
       if (msg.includes('401') || msg.includes('403') || msg.includes('not_logged')) {
+        clearAuthSession();
         setHubState('unauthenticated');
       } else {
         setHubState('error');
@@ -99,6 +129,14 @@ export function useAidaPlayer(): AidaPlayerState {
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  const logout = useCallback(() => {
+    clearAuthSession();
+    setUser(null);
+    setProfile(null);
+    setLeaderboard([]);
+    setHubState('unauthenticated');
+  }, []);
 
   // ── Valores derivados ──
   const totalXp = profile?.totalXp ?? 0;
@@ -126,6 +164,7 @@ export function useAidaPlayer(): AidaPlayerState {
     personaIdeal, nivelDiagnosticado,
     displayName, avatarInitial,
     refetch: fetchAll,
+    logout,
   };
 }
 

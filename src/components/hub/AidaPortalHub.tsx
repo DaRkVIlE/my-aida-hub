@@ -19,9 +19,8 @@ import {
   Flame, 
   CheckCircle2 
 } from "lucide-react";
-import { RANK_CONFIG } from "@/lib/manaApi";
+import { RANK_CONFIG, buildPortalUrl } from "@/lib/manaApi";
 import type { AidaPlayerState } from "@/hooks/useAidaPlayer";
-import { AIDA_CHAT_URL } from "@/hooks/useAidaPlayer";
 import { cn } from "@/lib/utils";
 
 export interface FluencyPortal {
@@ -141,10 +140,13 @@ export function AidaPortalHub({ player }: { player: AidaPlayerState }) {
 
   const handleEnterPortal = (portal: FluencyPortal) => {
     if (portal.isProOnly && !isPro) {
+      // Redireciona para a triagem/upgrade (dentro do Chat)
+      const AIDA_CHAT_URL = (import.meta.env.VITE_AIDA_CHAT_URL as string) || 'https://aida.experiasolutions.com.br';
       window.location.href = `${AIDA_CHAT_URL}/triagem`;
       return;
     }
-    window.location.href = `${AIDA_CHAT_URL}/?model=${portal.guardianModel}`;
+    // SSO Handoff: abre o Chat já logado e com a persona selecionada
+    window.location.href = buildPortalUrl(portal.guardianModel);
   };
 
   return (
