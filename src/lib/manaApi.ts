@@ -107,6 +107,60 @@ export async function upgradeStudent(userId: string, adminKey: string): Promise<
   });
 }
 
+// ─── Meta Agente AIDA (Tutora & Mentora Mestra) ───────────────────────────────
+
+export interface TutorChatResponse {
+  reply: string;
+}
+
+export interface TutorRecommendation {
+  recommendedPortal: string;
+  guardian: string;
+  rationale: string;
+  dailyAction: string;
+}
+
+export interface MentorHandoffDossier {
+  studentId: string;
+  studentName?: string;
+  tier: string;
+  rank: string;
+  streak: number;
+  totalXp: number;
+  diagnosedLevel?: string;
+  activeChunks?: string[];
+  weaknesses?: string[];
+  recommendedBossRaid?: string;
+  suggestedSessionAgenda?: string[];
+}
+
+/** Conversa em tempo real com o Meta Agente AIDA (Tutora Mestra) */
+export async function sendTutorMessage(
+  message: string,
+  history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+  userId?: string
+): Promise<TutorChatResponse> {
+  return apiFetch<TutorChatResponse>('/api/mana/tutor/chat', {
+    method: 'POST',
+    body: JSON.stringify({ message, history, userId }),
+  });
+}
+
+/** Retorna a recomendação diária da Tutora AIDA para o aluno */
+export async function getTutorRecommendation(userId: string): Promise<TutorRecommendation> {
+  return apiFetch<TutorRecommendation>(`/api/mana/tutor/recommendation/${userId}`);
+}
+
+/** Retorna o Dossiê Pedagógico para a aula presencial individual com Gabe */
+export async function getMentorHandoff(userId: string, adminKey?: string): Promise<MentorHandoffDossier> {
+  return apiFetch<MentorHandoffDossier>(`/api/mana/mentor-handoff/${userId}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(adminKey ? { 'x-admin-key': adminKey } : {}),
+    },
+  });
+}
+
 // ─── Helpers de Rank ─────────────────────────────────────────────────────────
 
 export const RANK_CONFIG: Record<PlayerRank, {

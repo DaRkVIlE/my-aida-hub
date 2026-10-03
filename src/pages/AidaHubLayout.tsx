@@ -17,6 +17,7 @@ import { AidaLeaderboard } from "@/components/leaderboard/AidaLeaderboard";
 import { DailyQuestTracker } from "@/components/quests/DailyQuestTracker";
 import { BattlePassPage } from "@/components/battlepass/BattlePassPage";
 import { AdminStudio } from "@/components/studio/AdminStudio";
+import { AidaTutorDrawer } from "@/components/tutor/AidaTutorDrawer";
 
 const SECTIONS: Record<string, string> = {
   hub:         "🌀 Portais de Imersão",
@@ -108,6 +109,9 @@ export function AidaHubLayout() {
           )}
         </main>
       </div>
+
+      {/* Meta Agente AIDA — Tutora & Mentora Mestra do Hub */}
+      <AidaTutorDrawer player={player} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Users, Sparkles, ShieldCheck, Search, RefreshCw, Trophy } from "lucide-react";
+import { Users, Sparkles, ShieldCheck, Search, RefreshCw, Trophy, FileText } from "lucide-react";
 import { getStudents, upgradeStudent, type ManaProfile, RANK_CONFIG } from "@/lib/manaApi";
+import { MentorHandoffModal } from "./MentorHandoffModal";
 import { cn } from "@/lib/utils";
 
 export function AdminStudio() {
@@ -9,6 +10,7 @@ export function AdminStudio() {
   const [adminKey, setAdminKey] = useState("");
   const [search, setSearch] = useState("");
   const [actionStatus, setActionStatus] = useState<string | null>(null);
+  const [selectedHandoffUser, setSelectedHandoffUser] = useState<string | null>(null);
 
   const fetchStudents = async () => {
     if (!adminKey) return;
@@ -121,7 +123,14 @@ export function AdminStudio() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 self-end sm:self-center">
+                  <div className="flex items-center gap-2 self-end sm:self-center">
+                    <button
+                      onClick={() => setSelectedHandoffUser(st.user)}
+                      className="bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-xs px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                    >
+                      <FileText className="w-3.5 h-3.5" /> Dossiê
+                    </button>
+
                     {st.tier !== "pro" ? (
                       <button
                         onClick={() => handleUpgrade(st.user)}
@@ -138,6 +147,14 @@ export function AdminStudio() {
             })}
           </div>
         </div>
+      )}
+
+      {selectedHandoffUser && (
+        <MentorHandoffModal
+          userId={selectedHandoffUser}
+          adminKey={adminKey}
+          onClose={() => setSelectedHandoffUser(null)}
+        />
       )}
     </div>
   );
