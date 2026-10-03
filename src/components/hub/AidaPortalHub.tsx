@@ -1,202 +1,324 @@
 /**
- * AidaPortalHub — Os 5 Portais de Imersão da AIDA
- * Versão AIDA do PortalHub3D do GABLAB OS.
- * Exibe os 5 portais de persona com estado FREE/PRO e navega para o chat.
+ * AidaPortalHub — Os 5 Portais da Fluência (Metodologia MANA)
+ * 
+ * Cada portal representa uma dimensão de maestria na Montanha B2,
+ * habitado por um Guardião nativo para treino conversacional de alto impacto.
+ * Superior ao Duolingo: sem exercícios mecânicos, apenas imersão contextual ativa.
  */
 
 import { useState } from "react";
-import { PERSONAS, type PersonaId } from "@/lib/manaApi";
+import { 
+  Mic, 
+  Compass, 
+  Gamepad2, 
+  Briefcase, 
+  GraduationCap, 
+  Sparkles, 
+  ArrowRight, 
+  Lock, 
+  Flame, 
+  CheckCircle2 
+} from "lucide-react";
 import { RANK_CONFIG } from "@/lib/manaApi";
 import type { AidaPlayerState } from "@/hooks/useAidaPlayer";
 import { AIDA_CHAT_URL } from "@/hooks/useAidaPlayer";
+import { cn } from "@/lib/utils";
 
-const FREE_PERSONAS: PersonaId[] = ['jordan', 'zack'];
-const PRO_PERSONAS: PersonaId[]  = ['alexandra', 'miles', 'hayes'];
-
-interface PortalCardProps {
-  personaId: PersonaId;
-  isIdeal: boolean;
-  isLocked: boolean;
-  onClick: () => void;
+export interface FluencyPortal {
+  id: string;
+  number: number;
+  title: string;
+  subtitle: string;
+  cefrLevel: string;
+  focus: string;
+  guardianName: string;
+  guardianRole: string;
+  guardianEmoji: string;
+  guardianModel: string;
+  accentColor: string;
+  borderGlow: string;
+  bgGradient: string;
+  isProOnly: boolean;
+  xpRewardPerSession: number;
+  mechanics: string[];
 }
 
-function PortalCard({ personaId, isIdeal, isLocked, onClick }: PortalCardProps) {
-  const [hovered, setHovered] = useState(false);
-  const persona = PERSONAS[personaId];
+export const FLUENCY_PORTALS: FluencyPortal[] = [
+  {
+    id: "portal-1-unfreeze",
+    number: 1,
+    title: "Descongelamento & Oralidade",
+    subtitle: "Destrave a boca e mate o filtro de tradução",
+    cefrLevel: "A1 → A2",
+    focus: "Fluência reativa, ritmo de fala diário e superação do medo de errar.",
+    guardianName: "Jordan",
+    guardianRole: "Amigo de NYC & Parça de Séries",
+    guardianEmoji: "🎬",
+    guardianModel: "jordan",
+    accentColor: "text-emerald-400",
+    borderGlow: "hover:border-emerald-500/50 hover:shadow-[0_0_35px_rgba(16,185,129,0.2)]",
+    bgGradient: "from-emerald-950/20 via-gray-900/60 to-gray-950/80",
+    isProOnly: false,
+    xpRewardPerSession: 30,
+    mechanics: ["Baby Mode Adaptativo", "Recasting Natural", "Sem Julgamento"]
+  },
+  {
+    id: "portal-2-digital-speed",
+    number: 2,
+    title: "Velocidade & Cultura Digital",
+    subtitle: "Raciocínio instantâneo sem parar para pensar",
+    cefrLevel: "A2 → B1",
+    focus: "Callouts rápidos, streams, gírias da internet e respostas reflexas.",
+    guardianName: "Zack",
+    guardianRole: "Streamer & E-sports Coach",
+    guardianEmoji: "🎮",
+    guardianModel: "zack",
+    accentColor: "text-purple-400",
+    borderGlow: "hover:border-purple-500/50 hover:shadow-[0_0_35px_rgba(139,92,246,0.2)]",
+    bgGradient: "from-purple-950/20 via-gray-900/60 to-gray-950/80",
+    isProOnly: false,
+    xpRewardPerSession: 35,
+    mechanics: ["Reflex Action", "Internet Slang", "Discord DM Energy"]
+  },
+  {
+    id: "portal-3-survival-travel",
+    number: 3,
+    title: "Sobrevivência & Viagem Real",
+    subtitle: "Não passe aperto em nenhum lugar do mundo",
+    cefrLevel: "B1 → B2",
+    focus: "Imigração, hotéis, restaurantes, aeroportos e resolução de perrengues.",
+    guardianName: "Miles",
+    guardianRole: "Viajante Global & Survival Guide",
+    guardianEmoji: "✈️",
+    guardianModel: "miles",
+    accentColor: "text-amber-400",
+    borderGlow: "hover:border-amber-500/50 hover:shadow-[0_0_35px_rgba(245,158,11,0.2)]",
+    bgGradient: "from-amber-950/20 via-gray-900/60 to-gray-950/80",
+    isProOnly: true,
+    xpRewardPerSession: 45,
+    mechanics: ["Simulações Situacionais", "Cenários de Pressão", "Roleplay Imersivo"]
+  },
+  {
+    id: "portal-4-business-voice",
+    number: 4,
+    title: "Voz Executiva & Negócios",
+    subtitle: "Postura e autoridade para o mercado global",
+    cefrLevel: "B2 Pleno",
+    focus: "Reuniões em call, negociações com gringos, e-mails executivos e pitches.",
+    guardianName: "Alexandra",
+    guardianRole: "Senior Business English Coach",
+    guardianEmoji: "💼",
+    guardianModel: "alexandra",
+    accentColor: "text-blue-400",
+    borderGlow: "hover:border-blue-500/50 hover:shadow-[0_0_35px_rgba(59,130,246,0.2)]",
+    bgGradient: "from-blue-950/20 via-gray-900/60 to-gray-950/80",
+    isProOnly: true,
+    xpRewardPerSession: 50,
+    mechanics: ["Corporate Recasting", "Micro-Cenários de Negócios", "Vocabulário de Liderança"]
+  },
+  {
+    id: "portal-5-mastery-intellect",
+    number: 5,
+    title: "Densidade Lexical & Fluência Nativa",
+    subtitle: "Expressão sofisticada e profundidade de ideias",
+    cefrLevel: "B2+ → C1",
+    focus: "Debate de ideias complexas, filosofia, livros e argumentação refinada.",
+    guardianName: "Prof. Hayes",
+    guardianRole: "Linguista & Master Conversationalist",
+    guardianEmoji: "📚",
+    guardianModel: "hayes",
+    accentColor: "text-cyan-400",
+    borderGlow: "hover:border-cyan-500/50 hover:shadow-[0_0_35px_rgba(6,182,212,0.2)]",
+    bgGradient: "from-cyan-950/20 via-gray-900/60 to-gray-950/80",
+    isProOnly: true,
+    xpRewardPerSession: 60,
+    mechanics: ["Elevação Lexical", "Expansão de Repertório", "Conexão Lógica Fina"]
+  }
+];
 
-  return (
-    <div
-      onClick={isLocked ? undefined : onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={[
-        "relative rounded-2xl border p-5 transition-all duration-300",
-        "bg-gray-900/60 backdrop-blur-sm",
-        isLocked
-          ? "opacity-40 grayscale cursor-not-allowed border-white/5"
-          : `cursor-pointer border-white/8 hover:border-opacity-60`,
-        hovered && !isLocked ? "scale-[1.02]" : "scale-100",
-      ].join(" ")}
-      style={
-        hovered && !isLocked
-          ? { borderColor: persona.glowColor.replace('0.3', '0.6'), boxShadow: `0 8px 40px ${persona.glowColor}` }
-          : { borderColor: 'rgba(255,255,255,0.06)' }
-      }
-    >
-      {/* Ideal badge */}
-      {isIdeal && (
-        <div className="absolute -top-2.5 left-4 bg-emerald-500 text-black text-[10px] font-black px-2.5 py-0.5 rounded-full">
-          ⭐ IDEAL
-        </div>
-      )}
-
-      {/* Lock badge */}
-      {isLocked && (
-        <div className="absolute -top-2.5 right-4 bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-          🔒 PRO
-        </div>
-      )}
-
-      <div className="flex items-start gap-4">
-        {/* Emoji portal */}
-        <div
-          className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl flex-shrink-0"
-          style={{
-            background: `radial-gradient(circle, ${persona.glowColor}, transparent)`,
-            border: `1px solid ${persona.glowColor.replace('0.3', '0.4')}`,
-          }}
-        >
-          {persona.emoji}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className={`font-bold text-base text-white`}>{persona.fullName}</div>
-          <div className="text-xs text-gray-400 mt-0.5 leading-relaxed">{persona.desc}</div>
-
-          {!isLocked && (
-            <div className={`text-xs font-semibold mt-2 ${persona.color}`}>
-              {hovered ? "Entrar no portal →" : "Disponível"}
-            </div>
-          )}
-          {isLocked && (
-            <div className="text-xs text-gray-700 mt-2">Upgrade para PRO para desbloquear</div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── XP / MANA summary bar no topo ─────────────────────────────────────────────
-function PlayerSummaryBar({ player }: { player: AidaPlayerState }) {
-  const { displayName, avatarInitial, totalXp, playerRank, rankConfig, xpProgress, currentMana, maxMana, manaPercent, streakDays, tier } = player;
-
-  return (
-    <div className="bg-gray-900/70 border border-white/8 rounded-2xl p-4 mb-6 backdrop-blur-sm">
-      <div className="flex items-center gap-4 flex-wrap">
-        {/* Avatar */}
-        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-lg font-black text-black flex-shrink-0">
-          {avatarInitial}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-white text-sm">{displayName}</span>
-            <span className="text-base">{rankConfig.emoji}</span>
-            <span className={`text-xs font-semibold ${rankConfig.color}`}>{rankConfig.label}</span>
-            {tier === 'pro' && (
-              <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded-full font-bold">PRO ✨</span>
-            )}
-          </div>
-
-          {/* XP bar */}
-          <div className="mt-1.5 flex items-center gap-2">
-            <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-1000"
-                style={{ width: `${xpProgress}%` }}
-              />
-            </div>
-            <span className="text-[10px] text-gray-500 whitespace-nowrap">{totalXp.toLocaleString('pt-BR')} XP</span>
-          </div>
-        </div>
-
-        {/* Stats compactos */}
-        <div className="flex items-center gap-4 text-center">
-          <div>
-            <div className="text-sm font-black text-emerald-400">{currentMana}<span className="text-gray-600 text-xs">/{maxMana}</span></div>
-            <div className="text-[10px] text-gray-500">MANA</div>
-          </div>
-          <div>
-            <div className="text-sm font-black text-amber-400">{streakDays}🔥</div>
-            <div className="text-[10px] text-gray-500">Streak</div>
-          </div>
-          <a
-            href={`${AIDA_CHAT_URL}`}
-            className="bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-xs px-4 py-2 rounded-xl transition-colors"
-          >
-            💬 Ir ao Chat
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Main Portal Hub ───────────────────────────────────────────────────────────
 export function AidaPortalHub({ player }: { player: AidaPlayerState }) {
-  const { isPro, personaIdeal } = player;
+  const { displayName, avatarInitial, totalXp, playerRank, rankConfig, xpProgress, currentMana, maxMana, streakDays, isPro, personaIdeal } = player;
 
-  const handlePortalClick = (personaId: PersonaId) => {
-    const persona = PERSONAS[personaId];
-    window.location.href = `${AIDA_CHAT_URL}${persona.chatPath}`;
+  const handleEnterPortal = (portal: FluencyPortal) => {
+    if (portal.isProOnly && !isPro) {
+      window.location.href = `${AIDA_CHAT_URL}/triagem`;
+      return;
+    }
+    window.location.href = `${AIDA_CHAT_URL}/?model=${portal.guardianModel}`;
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
-      {/* Barra de status do player */}
-      <PlayerSummaryBar player={player} />
+    <div className="max-w-5xl mx-auto space-y-8 animate-fade-in pb-12">
+      {/* ══ HERO DO JOGADOR ══ */}
+      <div className="bg-gray-900/70 border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-md relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
-      {/* Header do Hub */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center font-black text-2xl text-black shadow-[0_0_30px_rgba(16,185,129,0.3)] flex-shrink-0">
+              {avatarInitial}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-xl md:text-2xl font-black text-white">{displayName}</h1>
+                <span className="text-xl">{rankConfig.emoji}</span>
+                <span className={cn("text-xs font-bold px-2.5 py-0.5 rounded-full border bg-white/5", rankConfig.color, rankConfig.borderColor)}>
+                  {rankConfig.label}
+                </span>
+                {isPro && (
+                  <span className="text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-0.5 rounded-full">
+                    PRO ✨
+                  </span>
+                )}
+              </div>
+              <p className="text-gray-400 text-xs mt-1">
+                Jornada ativa na <span className="text-emerald-400 font-semibold">Montanha B2</span> • {totalXp.toLocaleString('pt-BR')} XP acumulados
+              </p>
+            </div>
+          </div>
+
+          {/* Quick HUD Counters */}
+          <div className="flex items-center gap-6 bg-black/40 border border-white/5 px-5 py-3 rounded-2xl self-start md:self-auto">
+            <div>
+              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Energia MANA</div>
+              <div className="text-lg font-black text-emerald-400 flex items-center gap-1">
+                ⚡ {currentMana}<span className="text-xs text-gray-600">/{maxMana}</span>
+              </div>
+            </div>
+            <div className="w-px h-8 bg-white/10" />
+            <div>
+              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Streak Ativo</div>
+              <div className="text-lg font-black text-amber-400 flex items-center gap-1">
+                🔥 {streakDays}d
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Bar to next rank */}
+        <div className="mt-6 pt-5 border-t border-white/5">
+          <div className="flex justify-between items-center text-xs text-gray-400 mb-1.5 font-medium">
+            <span>Evolução de Rank</span>
+            <span>{Math.round(xpProgress)}% concluído</span>
+          </div>
+          <div className="h-2 w-full bg-gray-950 rounded-full overflow-hidden border border-white/5">
+            <div 
+              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(16,185,129,0.5)]"
+              style={{ width: `${xpProgress}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ══ TÍTULO DOS PORTAIS ══ */}
       <div>
-        <h2 className="text-xl font-black text-white">🌀 Portais de Imersão</h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Escolha um portal para iniciar sua sessão de inglês. Cada portal é uma persona diferente com foco único.
+        <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+          <Sparkles className="w-4 h-4" />
+          Sistema de Imersão AIDA
+        </div>
+        <h2 className="text-2xl font-black text-white mt-1">Os 5 Portais da Fluência</h2>
+        <p className="text-gray-400 text-sm mt-1 max-w-2xl">
+          Ao invés de exercícios mecânicos de tradução, cada portal treina uma engrenagem neurocognitiva diferente do seu inglês.
         </p>
       </div>
 
-      {/* Grid de Portais */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {(Object.keys(PERSONAS) as PersonaId[]).map((personaId) => {
-          const isProPortal = PRO_PERSONAS.includes(personaId);
-          const isLocked = isProPortal && !isPro;
-          const isIdeal = personaId === personaIdeal;
+      {/* ══ GRID DOS PORTAIS DA FLUÊNCIA ══ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {FLUENCY_PORTALS.map((portal) => {
+          const isLocked = portal.isProOnly && !isPro;
+          const isIdeal = portal.guardianModel === personaIdeal;
 
           return (
-            <PortalCard
-              key={personaId}
-              personaId={personaId}
-              isIdeal={isIdeal}
-              isLocked={isLocked}
-              onClick={() => handlePortalClick(personaId)}
-            />
+            <div
+              key={portal.id}
+              onClick={() => handleEnterPortal(portal)}
+              className={cn(
+                "rounded-3xl border p-6 transition-all duration-300 backdrop-blur-md cursor-pointer relative overflow-hidden flex flex-col justify-between group",
+                `bg-gradient-to-br ${portal.bgGradient}`,
+                isLocked 
+                  ? "border-white/5 opacity-60 hover:opacity-85" 
+                  : `border-white/10 ${portal.borderGlow}`
+              )}
+            >
+              {/* Badges superiores */}
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-white/10 text-white border border-white/10">
+                    PORTAL {portal.number}
+                  </span>
+                  <span className={cn("text-xs font-bold font-mono", portal.accentColor)}>
+                    {portal.cefrLevel}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {isIdeal && (
+                    <span className="text-[10px] font-black bg-emerald-500 text-black px-2.5 py-0.5 rounded-full">
+                      ⭐ RECOMENDADO
+                    </span>
+                  )}
+                  {isLocked && (
+                    <span className="text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Lock className="w-3 h-3" /> PRO
+                    </span>
+                  )}
+                  <span className="text-xs font-semibold text-gray-500">
+                    +{portal.xpRewardPerSession} XP
+                  </span>
+                </div>
+              </div>
+
+              {/* Informações Principais */}
+              <div>
+                <h3 className="text-xl font-black text-white group-hover:text-emerald-300 transition-colors">
+                  {portal.title}
+                </h3>
+                <p className="text-xs font-medium text-gray-400 mt-1">
+                  {portal.subtitle}
+                </p>
+                <p className="text-xs text-gray-400/80 mt-3 leading-relaxed">
+                  {portal.focus}
+                </p>
+
+                {/* Tags de Mecânica */}
+                <div className="flex flex-wrap gap-1.5 mt-4">
+                  {portal.mechanics.map((m, idx) => (
+                    <span key={idx} className="text-[10px] bg-black/40 text-gray-400 border border-white/5 px-2 py-0.5 rounded-md">
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Guardião & Ação */}
+              <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center text-xl shadow-inner">
+                    {portal.guardianEmoji}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white flex items-center gap-1">
+                      Guardião: {portal.guardianName}
+                    </div>
+                    <div className="text-[10px] text-gray-500">
+                      {portal.guardianRole}
+                    </div>
+                  </div>
+                </div>
+
+                <div className={cn(
+                  "flex items-center gap-1.5 text-xs font-bold transition-transform group-hover:translate-x-1",
+                  isLocked ? "text-amber-400" : portal.accentColor
+                )}>
+                  <span>{isLocked ? "Desbloquear" : "Entrar"}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
           );
         })}
       </div>
-
-      {/* PRO upgrade CTA para usuários free */}
-      {!isPro && (
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5 text-center">
-          <p className="text-amber-300 font-bold text-sm mb-1">🔓 Desbloqueie todos os 5 Portais com o PRO</p>
-          <p className="text-gray-500 text-xs mb-4">Alexandra, Miles e Prof. Hayes estão disponíveis no plano PRO.</p>
-          <a
-            href={`${AIDA_CHAT_URL}/triagem`}
-            className="inline-block bg-amber-500 hover:bg-amber-400 text-black font-black px-6 py-2.5 rounded-xl text-sm transition-colors"
-          >
-            Fazer o Diagnóstico MANA →
-          </a>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,205 +1,177 @@
 import { useState, useEffect } from "react";
-import { Sun, Flame, Zap, BookOpen, Moon, CheckCircle2, Circle } from "lucide-react";
+import { Flame, Zap, CheckCircle2, Circle, Mic, Headphones, BookOpen, ShieldAlert, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSharedBrain } from "../../hooks/useSharedBrain";
+import { useAidaPlayer, AIDA_CHAT_URL } from "@/hooks/useAidaPlayer";
 
-import * as api from "@/lib/gameApi";
-import type { RpgDailyQuest } from "@/lib/gameApi";
-
-interface LocalQuest extends RpgDailyQuest {
-  completed: boolean;
-}
-
-interface QuestBlock {
+interface DailyQuestItem {
   id: string;
-  name: string;
-  time: string;
+  title: string;
+  desc: string;
+  xpReward: number;
   icon: any;
-  quests: LocalQuest[];
+  category: "speaking" | "listening" | "chunks" | "mastery";
+  personaTarget: string;
 }
 
-const TIMEZONE_CONFIGS: Record<string, { name: string, time: string, icon: any }> = {
-  raid: { name: "RAID ⚔️ (Bloco de Guerra)", time: "Manhã", icon: Flame },
-  arena: { name: "ARENA 🏟️ (Competitivo)", time: "Tarde", icon: Zap },
-  santuario: { name: "SANTUÁRIO 🧘 (Recuperação)", time: "Noite", icon: Moon },
-  ritual: { name: "RITUAL 🔮 (Fechamento)", time: "Geral", icon: BookOpen },
-};
+const AIDA_DAILY_QUESTS: DailyQuestItem[] = [
+  {
+    id: "q-speaking-warmup",
+    title: "Aquecimento de Mandíbula",
+    desc: "Mandar 3 áudios em inglês sem travar e sem traduzir antes de falar.",
+    xpReward: 35,
+    icon: Mic,
+    category: "speaking",
+    personaTarget: "jordan"
+  },
+  {
+    id: "q-chunk-catcher",
+    title: "Caçador de Chunks",
+    desc: "Identificar e usar 2 collocations naturais durante uma conversa fluida.",
+    xpReward: 40,
+    icon: BookOpen,
+    category: "chunks",
+    personaTarget: "hayes"
+  },
+  {
+    id: "q-listening-ear",
+    title: "Ear Training Nativo",
+    desc: "Escutar e responder uma situação rápida com sotaque americano real.",
+    xpReward: 30,
+    icon: Headphones,
+    category: "listening",
+    personaTarget: "miles"
+  },
+  {
+    id: "q-pure-run",
+    title: "Pure Run Imersivo",
+    desc: "5 minutos ininterruptos de diálogo no AIDA Chat sem NENHUMA palavra em português.",
+    xpReward: 60,
+    icon: ShieldAlert,
+    category: "mastery",
+    personaTarget: "alexandra"
+  }
+];
 
 export function DailyQuestTracker() {
-  const { completeQuest, xp, focoGems, streak } = useSharedBrain();
-  const [blocks, setBlocks] = useState<QuestBlock[]>([]);
-  const [localStreak, setLocalStreak] = useState(streak);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchQuests() {
-      setLoading(true);
-      const data = await api.getDailyQuests();
-      const activeQuests = data.filter(q => q.is_active);
-      
-      const grouped = activeQuests.reduce((acc, quest) => {
-        const tz = quest.time_zone || "ritual";
-        if (!acc[tz]) acc[tz] = [];
-        acc[tz].push({ ...quest, completed: false });
-        return acc;
-      }, {} as Record<string, LocalQuest[]>);
-
-      const newBlocks: QuestBlock[] = Object.keys(grouped).map(tz => {
-        const cfg = TIMEZONE_CONFIGS[tz] || TIMEZONE_CONFIGS.ritual;
-        return {
-          id: tz,
-          name: cfg.name,
-          time: cfg.time,
-          icon: cfg.icon,
-          quests: grouped[tz]
-        };
-      });
-
-      setBlocks(newBlocks);
-      setLoading(false);
+  const { totalXp, streakDays } = useAidaPlayer();
+  const [completedIds, setCompletedIds] = useState<string[]>(() => {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const saved = localStorage.getItem(`aida_quests_${today}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-    fetchQuests();
-  }, []);
+  });
 
-  useEffect(() => {
-    // Sync streak when loaded from brain
-    if (streak > 0) setLocalStreak(streak);
-  }, [streak]);
-
-  const toggleQuest = async (blockId: string, questId: string) => {
-    // Find quest
-    let targetQuest: LocalQuest | null = null;
-    
-    const newBlocks = blocks.map(block => {
-      if (block.id === blockId) {
-        return {
-          ...block,
-          quests: block.quests.map(quest => {
-            if (quest.id === questId) {
-              targetQuest = quest;
-              return { ...quest, completed: !quest.completed };
-            }
-            return quest;
-          }),
-        };
+  const toggleQuest = (id: string) => {
+    setCompletedIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        localStorage.setItem(`aida_quests_${today}`, JSON.stringify(next));
+      } catch (err) {
+        console.error(err);
       }
-      return block;
+      return next;
     });
-
-    setBlocks(newBlocks);
-
-    // Persist if checking (not unchecking)
-    if (targetQuest !== null && !targetQuest!.completed) {
-      if (targetQuest!.xp_reward > 0) await completeQuest(questId, 'XP', targetQuest!.xp_reward);
-      if (targetQuest!.gem_reward > 0) await completeQuest(questId, 'GEMS', targetQuest!.gem_reward);
-    }
   };
 
-  const totalQuests = blocks.reduce((acc, block) => acc + block.quests.length, 0);
-  const completedQuests = blocks.reduce((acc, block) => 
-    acc + block.quests.filter(q => q.completed).length, 0);
-  const dailyProgress = (completedQuests / totalQuests) * 100;
+  const completedCount = completedIds.length;
+  const progressPercent = Math.round((completedCount / AIDA_DAILY_QUESTS.length) * 100);
 
   return (
-    <div className="space-y-6">
-      {/* Header Stats */}
-      <div className="flex items-center justify-between">
+    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
+      {/* Header Quests */}
+      <div className="bg-gray-900/60 border border-white/10 rounded-2xl p-6 backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="font-serif text-2xl text-secondary glow-gold">Rotina KAIROS</h2>
-          <p className="text-muted-foreground">Sistema RPG (Pareto Cubed v3.0)</p>
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-emerald-400" />
+            <h2 className="text-xl font-black text-white">Quests Diárias de Imersão</h2>
+          </div>
+          <p className="text-gray-400 text-sm mt-1">
+            Treinos curtos de alta intensidade. Conquiste XP e fortaleça sua fluência diária.
+          </p>
         </div>
-        
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 glass-card px-4 py-2">
-            <Flame className="w-5 h-5 text-orange-500" />
-            <span className="font-mono text-lg">{localStreak} dias</span>
-          </div>
 
-          <div className="flex items-center gap-2 glass-card px-4 py-2 border-green-500/30">
-            <span className="font-bold text-green-400">{xp} XP</span>
+        {/* Progress Circle & Counter */}
+        <div className="flex items-center gap-4 bg-black/40 border border-white/5 px-4 py-3 rounded-xl">
+          <div className="text-right">
+            <div className="text-xs text-gray-500 font-semibold uppercase">Progresso do Dia</div>
+            <div className="text-lg font-black text-emerald-400">{completedCount} / {AIDA_DAILY_QUESTS.length} Feitas</div>
           </div>
-          
-          <div className="w-48">
-            <div className="flex justify-between text-xs mb-1">
-              <span className="text-muted-foreground">Progresso Diário</span>
-              <span className="text-secondary">{completedQuests}/{totalQuests}</span>
-            </div>
-            <div className="progress-bar">
-              <div className="progress-fill-gold" style={{ width: `${dailyProgress}%` }} />
-            </div>
+          <div className="w-12 h-12 rounded-full border-2 border-emerald-500/30 flex items-center justify-center font-black text-xs text-white bg-emerald-500/10">
+            {progressPercent}%
           </div>
         </div>
       </div>
 
-      {/* Quest Blocks */}
-      {loading ? (
-        <div className="text-muted-foreground">Carregando quests diárias...</div>
-      ) : blocks.length === 0 ? (
-        <div className="text-muted-foreground p-8 text-center glass-card">
-          Nenhuma quest diária configurada. Acesse o <strong>Mechanics Studio</strong> para configurar seu dia.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {blocks.map((block, blockIndex) => (
-            <div 
-              key={block.id} 
-              className="glass-card p-6 animate-fade-in"
-              style={{ animationDelay: `${blockIndex * 150}ms` }}
+      {/* Quests List */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {AIDA_DAILY_QUESTS.map((quest) => {
+          const isDone = completedIds.includes(quest.id);
+          const Icon = quest.icon;
+
+          return (
+            <div
+              key={quest.id}
+              onClick={() => toggleQuest(quest.id)}
+              className={cn(
+                "rounded-2xl border p-5 cursor-pointer transition-all duration-200 backdrop-blur-sm flex flex-col justify-between select-none relative overflow-hidden group",
+                isDone 
+                  ? "bg-emerald-950/20 border-emerald-500/40 opacity-90 shadow-[0_0_20px_rgba(16,185,129,0.1)]" 
+                  : "bg-gray-900/50 border-white/10 hover:border-white/20 hover:bg-gray-900/70"
+              )}
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
-                  <block.icon className="w-6 h-6 text-secondary" />
+              <div>
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className={cn(
+                      "w-9 h-9 rounded-xl flex items-center justify-center transition-colors",
+                      isDone ? "bg-emerald-500 text-black font-black" : "bg-white/5 text-gray-400 group-hover:text-emerald-400"
+                    )}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{quest.category}</span>
+                  </div>
+
+                  <span className="text-xs font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                    +{quest.xpReward} XP
+                  </span>
                 </div>
-                <div>
-                  <h3 className="font-serif text-lg">{block.name}</h3>
-                  <p className="text-xs text-muted-foreground">{block.time}</p>
-                </div>
+
+                <h3 className={cn("text-base font-bold", isDone ? "text-emerald-300 line-through decoration-emerald-500/50" : "text-white")}>
+                  {quest.title}
+                </h3>
+                <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+                  {quest.desc}
+                </p>
               </div>
 
-              <div className="space-y-3">
-                {block.quests.map((quest) => (
-                  <button
-                    key={quest.id}
-                    onClick={() => toggleQuest(block.id, quest.id)}
-                    className={cn(
-                      "w-full text-left p-3 rounded-lg border transition-all duration-300",
-                      quest.completed 
-                        ? "bg-green-500/10 border-green-500/30" 
-                        : "bg-muted/30 border-border hover:border-secondary/30"
-                    )}
-                  >
-                    <div className="flex items-start gap-3">
-                      {quest.completed ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                      ) : (
-                        <Circle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <p className={cn(
-                          "text-sm font-medium",
-                          quest.completed && "line-through text-muted-foreground"
-                        )}>
-                          {quest.title}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          {quest.xp_reward > 0 && (
-                            <span className="text-xs text-secondary-foreground">+{quest.xp_reward} XP</span>
-                          )}
-                          {quest.gem_reward > 0 && (
-                            <span className="text-xs text-blue-400 flex items-center gap-1">
-                              <Zap className="w-3 h-3" /> +{quest.gem_reward}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                ))}
+              <div className="mt-5 pt-3 border-t border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-semibold text-gray-400">
+                  {isDone ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <Circle className="w-4 h-4 text-gray-600 group-hover:text-gray-400" />
+                  )}
+                  <span>{isDone ? "Concluída!" : "Marcar como feita"}</span>
+                </div>
+
+                <a
+                  href={`${AIDA_CHAT_URL}/?model=${quest.personaTarget}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
+                >
+                  Treinar no Chat →
+                </a>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
     </div>
   );
 }

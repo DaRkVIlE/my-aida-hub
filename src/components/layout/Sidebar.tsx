@@ -1,88 +1,85 @@
 import { 
-  LayoutDashboard, 
-  Swords, 
-  ShoppingBag, 
-  Sparkles,
-  Hexagon,
-  Calendar,
-  TrendingUp,
-  Scroll,
-  Wallet,
-  UserCircle,
-  Home,
-  Trophy,
-  Settings,
-  Compass
+  Compass, 
+  Home, 
+  UserCircle, 
+  Scroll, 
+  Trophy, 
+  MessageSquare,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AIDA_CHAT_URL } from "@/hooks/useAidaPlayer";
 
 interface SidebarProps {
   activeSection: string;
-  onSectionChange: (section: string) => void;
+  onNavigate: (section: string) => void;
 }
 
 const navItems = [
-  { id: "hub", icon: Compass, label: "Gate Map 3D" },
-  { id: "dashboard", icon: Home, label: "Command Center" },
-  { id: "battlepass", icon: Trophy, label: "Season Pass" },
-  { id: "charsheet", icon: UserCircle, label: "Char Sheet" },
-  { id: "agenda", icon: Calendar, label: "Agenda" },
-  { id: "quests", icon: Scroll, label: "Daily Quests" },
-  { id: "questlines", icon: LayoutDashboard, label: "Questlines" },
-  { id: "skills", icon: TrendingUp, label: "Skill Tree" },
-  { id: "bosses", icon: Swords, label: "Boss Room" },
-  { id: "finances", icon: Wallet, label: "Finances" },
-  { id: "loot", icon: ShoppingBag, label: "Arsenal" },
-  { id: "sanctuary", icon: Sparkles, label: "Santuário" },
-  { id: "studio", icon: Settings, label: "Mechanics Studio" },
+  { id: "hub",         icon: Compass,       label: "Portais" },
+  { id: "dashboard",   icon: Home,          label: "Dashboard" },
+  { id: "charsheet",   icon: UserCircle,    label: "Ficha" },
+  { id: "quests",      icon: Scroll,        label: "Quests" },
+  { id: "leaderboard", icon: Trophy,        label: "Ranking" },
+  { id: "battlepass",  icon: Sparkles,      label: "Season" },
 ];
 
-export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
+export function Sidebar({ activeSection, onNavigate }: SidebarProps) {
   return (
-    <aside className="w-20 min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col items-center py-6 gap-2 relative">
-      {/* Decorative line */}
-      <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-primary/50 via-transparent to-primary/50" />
-      
-      {/* Logo */}
+    <aside className="w-16 md:w-20 min-h-screen bg-[#070b14] border-r border-white/10 flex flex-col items-center py-5 gap-3 relative z-30 select-none">
+      {/* Glow highlight */}
+      <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-emerald-500/40 via-transparent to-emerald-500/40" />
+
+      {/* Brand Icon */}
       <button 
-        onClick={() => onSectionChange("hub")} 
-        className="mb-8 p-3 relative group transition-transform hover:scale-110"
-        title="Retornar ao Gate Map 3D"
+        onClick={() => onNavigate("hub")} 
+        className="mb-6 p-2 relative group transition-transform hover:scale-105"
+        title="AIDA — Portais da Fluência"
       >
-        <Hexagon className="w-10 h-10 text-primary glow-cyan transition-colors group-hover:text-system-cyan" />
-        <div className="absolute inset-0 bg-primary/10 blur-xl group-hover:bg-system-cyan/20 transition-colors" />
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-black font-black text-lg shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+          ⚡
+        </div>
       </button>
 
-      {/* Navigation */}
-      <nav className="flex flex-col gap-1 flex-1">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onSectionChange(item.id)}
-            className={cn(
-              "icon-btn group relative",
-              activeSection === item.id && "icon-btn-active"
-            )}
-            title={item.label}
-          >
-            <item.icon className="w-6 h-6" />
-            
-            {/* Tooltip */}
-            <span className="absolute left-full ml-3 px-3 py-2 bg-card/95 backdrop-blur-xl rounded-lg text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-primary/30 z-50 text-primary">
-              {item.label}
-            </span>
-
-            {/* Active indicator */}
-            {activeSection === item.id && (
-              <div className="absolute -right-[1px] top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-l-full" />
-            )}
-          </button>
-        ))}
+      {/* Navigation list */}
+      <nav className="flex flex-col gap-2 flex-1 w-full px-2">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeSection === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+              className={cn(
+                "w-full h-12 rounded-xl flex flex-col items-center justify-center gap-1 transition-all duration-200 relative group",
+                isActive 
+                  ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]" 
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+              )}
+              title={item.label}
+            >
+              {isActive && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-emerald-400 rounded-r-full" />
+              )}
+              <Icon className={cn("w-5 h-5 transition-transform group-hover:scale-110", isActive && "text-emerald-400")} />
+              <span className="text-[10px] font-medium tracking-tight truncate max-w-full px-1">{item.label}</span>
+            </button>
+          );
+        })}
       </nav>
 
-      {/* Version Badge */}
-      <div className="text-xs text-primary/60 font-mono">
-        v5.0
+      {/* Quick link to AIDA Chat at bottom */}
+      <div className="w-full px-2 pt-2 border-t border-white/5">
+        <a
+          href={AIDA_CHAT_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="w-full h-12 rounded-xl flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+          title="Abrir Chat da AIDA"
+        >
+          <MessageSquare className="w-5 h-5" />
+          <span className="text-[9px] font-bold text-gray-500">Chat</span>
+        </a>
       </div>
     </aside>
   );

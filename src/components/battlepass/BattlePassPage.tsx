@@ -1,207 +1,104 @@
-import { Trophy, Target, Zap, Rocket, Star, CheckCircle2, ChevronRight } from "lucide-react";
+import { Trophy, Star, CheckCircle2, Lock, Sparkles, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAidaPlayer } from "@/hooks/useAidaPlayer";
 
-const SPRINT_MISSIONS = [
-  {
-    id: "experia-mvp",
-    title: "OP 1: Experia MVP",
-    description: "Consolidar 3 cases locais via Free Trial de automação com N8N.",
-    progress: 33, // 1/3 trials done
-    goal: "3 Free Trials Entregues",
-    color: "blue",
-    icon: Rocket,
-    subtasks: [
-      { id: "e1", title: "Mapeamento de 10 Alvos Locais", done: true },
-      { id: "e2", title: "Diagnóstico Técnico de Informática (Alvo 1)", done: true },
-      { id: "e3", title: "Entrega do Chatbot N8N (Alvo 1)", done: false },
-      { id: "e4", title: "Coleta do Depoimento em Vídeo", done: false },
-      { id: "e5", title: "Abordagem Alvos 2 e 3", done: false },
-    ]
-  },
-  {
-    id: "english-classes",
-    title: "OP 2: English AI Classes",
-    description: "Levantar caixa rápido retomando aulas de inglês com suporte de IA.",
-    progress: 0,
-    goal: "R$ 3.000 em Contratos",
-    color: "green",
-    icon: Zap,
-    subtasks: [
-      { id: "i1", title: "Estruturação do Material / Prompt IA", done: true },
-      { id: "i2", title: "Lista de Ex-alunos / Prospecção Quente", done: false },
-      { id: "i3", title: "Fechamento do 1º Pacote", done: false },
-      { id: "i4", title: "Fechamento do 2º Pacote", done: false },
-    ]
-  }
-];
+interface SeasonTier {
+  level: number;
+  xpReq: number;
+  title: string;
+  reward: string;
+  badge: string;
+  portalUnlock?: string;
+}
 
-const BATTLE_PASS_TIERS = [
-  { level: 1, xpReq: 0, reward: "Acesso Liberado", unlocked: true },
-  { level: 2, xpReq: 500, reward: "Equipamento Upgrade", unlocked: true },
-  { level: 3, xpReq: 1200, reward: "Jantar de Comemoração", unlocked: false },
-  { level: 4, xpReq: 2500, reward: "Investimento em Ads", unlocked: false },
-  { level: 5, xpReq: 5000, reward: "Day Off Premium", unlocked: false },
+const SEASON_TIERS: SeasonTier[] = [
+  { level: 1, xpReq: 0,     title: "Descongelamento",      reward: "Acesso Imediato ao Portal Jordan", badge: "🎬", portalUnlock: "Jordan" },
+  { level: 2, xpReq: 500,   title: "Aceleração Auditiva",  reward: "Acesso ao Portal Gaming Zack",     badge: "🎮", portalUnlock: "Zack" },
+  { level: 3, xpReq: 1500,  title: "Ponte Internacional",  reward: "Acesso ao Portal Miles Viagens",   badge: "✈️", portalUnlock: "Miles" },
+  { level: 4, xpReq: 4000,  title: "Voz Executiva",        reward: "Acesso ao Portal Alexandra (Business)", badge: "💼", portalUnlock: "Alexandra" },
+  { level: 5, xpReq: 10000, title: "Imersão Acadêmica",    reward: "Acesso ao Prof. Hayes (Fluência)", badge: "📚", portalUnlock: "Hayes" },
+  { level: 6, xpReq: 25000, title: "Soberania B2/C1",      reward: "Certificação AIDA & Rank Soberano", badge: "👑" },
 ];
 
 export function BattlePassPage() {
-  const currentXP = 850;
-  
+  const { totalXp, playerRank, rankConfig } = useAidaPlayer();
+
   return (
-    <div className="space-y-8 max-w-5xl mx-auto animate-fade-in">
+    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border/50 pb-6">
+      <div className="bg-gray-900/60 border border-white/10 rounded-2xl p-6 backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="font-serif text-3xl text-primary glow-cyan flex items-center gap-3 uppercase tracking-wider">
-            <Trophy className="w-8 h-8" />
-            Season 1: First Blood
-          </h2>
-          <p className="text-muted-foreground font-mono text-sm mt-1">
-            Sprint Focus: 24 Maio - 31 Maio 2026
+          <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+            <Sparkles className="w-4 h-4" />
+            Season 1 — A Montanha B2
+          </div>
+          <h2 className="text-2xl font-black text-white mt-1">Trilha do Season Pass</h2>
+          <p className="text-gray-400 text-sm mt-1">
+            Cada conversa destrava novos níveis de fluência, personas e recompensas exclusivas.
           </p>
         </div>
-        
-        <div className="text-right">
-          <div className="text-sm font-mono text-muted-foreground uppercase tracking-wider">
-            XP Sazonal
+
+        {/* Current XP & Rank */}
+        <div className="flex items-center gap-4 bg-black/40 border border-white/5 p-4 rounded-xl">
+          <div className="text-right">
+            <div className="text-xs text-gray-500 font-semibold uppercase">Seu Progresso</div>
+            <div className="text-lg font-black text-emerald-400">{totalXp.toLocaleString('pt-BR')} XP</div>
           </div>
-          <div className="text-5xl font-display text-primary glow-cyan flex items-baseline gap-2">
-            {currentXP} <span className="text-lg text-muted-foreground">/ 5000</span>
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center font-black text-lg text-black shadow-lg">
+            {rankConfig.emoji}
           </div>
         </div>
       </div>
 
-      {/* War Room: Sprints */}
-      <div>
-        <h3 className="font-serif text-2xl mb-6 flex items-center gap-2">
-          <Target className="w-6 h-6 text-red-400" />
-          War Room (Operações Ativas)
-        </h3>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {SPRINT_MISSIONS.map(mission => (
-            <div key={mission.id} className={cn(
-              "glass-card p-6 border-t-4",
-              mission.color === "blue" ? "border-t-blue-500 bg-blue-500/5" : "border-t-green-500 bg-green-500/5"
-            )}>
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex gap-3">
-                  <div className={cn(
-                    "p-3 rounded-xl",
-                    mission.color === "blue" ? "bg-blue-500/20 text-blue-400" : "bg-green-500/20 text-green-400"
-                  )}>
-                    <mission.icon className="w-6 h-6" />
+      {/* Tiers List */}
+      <div className="space-y-3">
+        {SEASON_TIERS.map((tier) => {
+          const isUnlocked = totalXp >= tier.xpReq;
+          const progressToTier = Math.min(100, Math.max(0, (totalXp / (tier.xpReq || 1)) * 100));
+
+          return (
+            <div
+              key={tier.level}
+              className={cn(
+                "rounded-2xl border p-5 transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-sm",
+                isUnlocked 
+                  ? "bg-gray-900/60 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.05)]" 
+                  : "bg-gray-950/40 border-white/5 opacity-60"
+              )}
+            >
+              <div className="flex items-center gap-4">
+                <div className={cn(
+                  "w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0",
+                  isUnlocked ? "bg-emerald-500/15 border border-emerald-500/30" : "bg-white/5 border border-white/5 grayscale"
+                )}>
+                  {tier.badge}
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tier {tier.level}</span>
+                    <span className="text-xs text-gray-600">•</span>
+                    <span className="text-xs text-emerald-400 font-bold">{tier.xpReq.toLocaleString('pt-BR')} XP</span>
                   </div>
-                  <div>
-                    <h4 className={cn(
-                      "font-display text-xl uppercase tracking-wide",
-                      mission.color === "blue" ? "text-blue-400" : "text-green-400"
-                    )}>{mission.title}</h4>
-                    <p className="text-sm text-muted-foreground">{mission.description}</p>
-                  </div>
+                  <h3 className="text-base font-bold text-white mt-0.5">{tier.title}</h3>
+                  <p className="text-xs text-gray-400 mt-0.5">{tier.reward}</p>
                 </div>
               </div>
 
-              {/* Progress Bar */}
-              <div className="mb-6">
-                <div className="flex justify-between text-xs font-mono uppercase mb-2">
-                  <span className="text-muted-foreground">Meta: {mission.goal}</span>
-                  <span className={mission.color === "blue" ? "text-blue-400" : "text-green-400"}>{mission.progress}%</span>
-                </div>
-                <div className="h-2 w-full bg-muted/30 rounded-full overflow-hidden">
-                  <div 
-                    className={cn(
-                      "h-full rounded-full transition-all duration-1000",
-                      mission.color === "blue" ? "bg-blue-500" : "bg-green-500"
-                    )}
-                    style={{ width: `${mission.progress}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Subtasks */}
-              <div className="space-y-3">
-                {mission.subtasks.map(task => (
-                  <div key={task.id} className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg border text-sm transition-all",
-                    task.done 
-                      ? "bg-foreground/5 border-foreground/10 text-muted-foreground" 
-                      : "bg-background border-border hover:border-foreground/30 text-foreground"
-                  )}>
-                    {task.done ? (
-                      <CheckCircle2 className="w-5 h-5 text-primary opacity-70" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/50" />
-                    )}
-                    <span className={cn(task.done && "line-through opacity-70")}>{task.title}</span>
+              <div className="flex items-center gap-3 self-end sm:self-center">
+                {isUnlocked ? (
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full">
+                    <CheckCircle2 className="w-4 h-4" /> Desbloqueado
                   </div>
-                ))}
+                ) : (
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 bg-white/5 border border-white/5 px-3 py-1.5 rounded-full">
+                    <Lock className="w-3.5 h-3.5" /> Bloqueado ({tier.xpReq - totalXp} XP faltam)
+                  </div>
+                )}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Battle Pass Tiers */}
-      <div className="mt-12">
-        <h3 className="font-serif text-2xl mb-6 flex items-center gap-2">
-          <Star className="w-6 h-6 text-yellow-400" />
-          Battle Pass Tiers
-        </h3>
-        
-        <div className="relative">
-          {/* Connecting Line */}
-          <div className="absolute left-8 top-8 bottom-8 w-1 bg-muted/20 rounded-full z-0" />
-          <div 
-            className="absolute left-8 top-8 w-1 bg-primary rounded-full z-0 transition-all duration-1000"
-            style={{ height: '35%' }} // Visual approximation of progress
-          />
-
-          <div className="space-y-6 relative z-10">
-            {BATTLE_PASS_TIERS.map((tier, index) => (
-              <div key={tier.level} className="flex items-center gap-6">
-                {/* Node */}
-                <div className={cn(
-                  "w-16 h-16 flex items-center justify-center rounded-2xl border-2 font-display text-2xl shrink-0 transition-all",
-                  tier.unlocked 
-                    ? "bg-primary/20 border-primary text-primary glow-cyan shadow-[0_0_15px_rgba(201,168,76,0.4)]" 
-                    : "bg-muted/30 border-muted text-muted-foreground"
-                )}>
-                  {tier.level}
-                </div>
-                
-                {/* Info Card */}
-                <div className={cn(
-                  "flex-1 p-5 rounded-xl border flex items-center justify-between transition-all",
-                  tier.unlocked 
-                    ? "bg-primary/5 border-primary/30" 
-                    : "bg-muted/10 border-border/50"
-                )}>
-                  <div>
-                    <div className="font-mono text-xs text-muted-foreground uppercase tracking-widest mb-1">
-                      {tier.xpReq} XP Requerido
-                    </div>
-                    <div className={cn(
-                      "font-serif text-lg",
-                      tier.unlocked ? "text-foreground" : "text-muted-foreground"
-                    )}>
-                      {tier.reward}
-                    </div>
-                  </div>
-                  
-                  {tier.unlocked ? (
-                     <div className="flex items-center gap-2 text-primary font-mono text-sm uppercase">
-                       Desbloqueado <CheckCircle2 className="w-4 h-4" />
-                     </div>
-                  ) : (
-                    <div className="text-muted-foreground opacity-50">
-                      <ChevronRight className="w-6 h-6" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+          );
+        })}
       </div>
     </div>
   );

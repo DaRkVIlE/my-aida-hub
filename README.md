@@ -1,73 +1,68 @@
-# Welcome to your Lovable project
+# AIDA Hub
 
-## Project info
+**Cockpit de Gamificação dos Alunos AIDA** — painel de progresso de inglês com gamificação completa.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Arquitetura
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+[Aluno] → [AIDA Hub] → [AIDA Chat (LibreChat)]
+              ↕
+        /api/mana/* + /api/user
+        (my-aida-agents-hub)
 ```
 
-**Edit a file directly in GitHub**
+O Hub é o **gateway obrigatório** antes do chat. O aluno vê seu progresso, rank, XP, MANA e 5 Portais de Imersão — e a partir daí entra no chat com a persona escolhida.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Stack
 
-**Use GitHub Codespaces**
+- **React 18** + **Vite** + **TypeScript**
+- **shadcn/ui** + **Tailwind CSS**
+- **Recharts** (radar chart de habilidades)
+- **react-router-dom** v6
+- **@tanstack/react-query**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Rodar localmente
 
-## What technologies are used for this project?
+```bash
+cp .env.example .env
+# Editar .env com as URLs corretas
 
-This project is built with:
+npm install
+npm run dev
+# → http://localhost:5173
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+> Para desenvolvimento com o LibreChat local: setar `VITE_AIDA_API_URL=http://localhost:3080`
 
-## How can I deploy this project?
+## Deploy (Railway)
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+1. Criar novo serviço Railway a partir deste repo
+2. Build Command: `npm run build`
+3. Start Command: `npx serve dist`
+4. Envs: `VITE_AIDA_CHAT_URL`, `VITE_AIDA_API_URL`
 
-## Can I connect a custom domain to my Lovable project?
+## Seções do Hub
 
-Yes, you can!
+| Seção | Descrição |
+|---|---|
+| 🌀 Portais | 5 portais de imersão (personas AIDA) com FREE/PRO gating |
+| ⚡ Dashboard | XP, MANA bar, Streak, Rank e roadmap de evolução |
+| 📋 Ficha | CharSheet com radar chart de habilidades e habilidades passivas |
+| 🏆 Ranking | Leaderboard global dos alunos |
+| 🎯 Quests | Quests diárias de prática |
+| 🎖️ Battle Pass | Trilha de recompensas do Season |
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Integração com AIDA Chat
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+O Hub consome estas rotas do LibreChat (`my-aida-agents-hub`):
+
+- `GET /api/user` — usuário logado (via cookie de sessão)
+- `GET /api/mana/profile/:userId` — perfil MANA
+- `GET /api/mana/leaderboard` — ranking
+- `POST /api/mana/triage` — resultado do diagnóstico
+- `POST /api/mana/upgrade` — upgrade FREE→PRO (admin)
+
+## Forked from
+
+GABLAB OS `pgt-ui` — Personal Life OS gamificado do Gabriel Ferreira.
+Adaptado para o contexto AIDA com data layer completamente substituído (Supabase → MongoDB via AIDA API).
