@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AidaHubLayout } from "./pages/AidaHubLayout";
 import { LoginGate } from "./pages/LoginGate";
+import { LandingPageVSL } from "./pages/LandingPageVSL";
+import { ManaTriagemQuiz } from "./pages/ManaTriagemQuiz";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,6 +17,14 @@ const queryClient = new QueryClient({
   },
 });
 
+function RootGateway() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("aida_access_token") : null;
+  if (token) {
+    return <AidaHubLayout />;
+  }
+  return <LandingPageVSL />;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -22,10 +32,19 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Gate de login — redireciona para o AIDA Chat se não autenticado */}
+          {/* Gateway Raiz: Se autenticado vai pro Hub, se não vai pra Landing Page */}
+          <Route path="/" element={<RootGateway />} />
+
+          {/* Páginas Públicas do Funil de Conversão */}
+          <Route path="/landing" element={<LandingPageVSL />} />
+          <Route path="/triagem" element={<ManaTriagemQuiz />} />
+          <Route path="/quiz" element={<Navigate to="/triagem" replace />} />
+
+          {/* Autenticação & Acesso */}
           <Route path="/login" element={<LoginGate />} />
 
-          {/* Hub Principal — todas as seções */}
+          {/* Hub do Jogador (rotas internas do cockpit) */}
+          <Route path="/hub/*" element={<AidaHubLayout />} />
           <Route path="/*" element={<AidaHubLayout />} />
         </Routes>
       </BrowserRouter>
