@@ -62,6 +62,7 @@ export function AidaTutorDrawer({ player }: { player: AidaPlayerState }) {
       const history = newMessages.map(m => ({ role: m.role, content: m.content }));
       const res = await sendTutorMessage(text, history, userId);
       setMessages([...newMessages, { role: "assistant", content: res.reply }]);
+      player.refetch();
     } catch (err: any) {
       setMessages([
         ...newMessages,
